@@ -485,7 +485,7 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
     # sendAnonymousData(config, vgw['Tags'], region, 1)
 
 
-def lambda_handler():
+def lambda_handler(event, context):
     # Figure out the account number by parsing this function's ARN
     account_id = re.findall(':(\d+):', context.invoked_function_arn)[0]
     # Retrieve Transit VPC configuration from transit_vpn_config.txt
