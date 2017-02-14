@@ -23,7 +23,7 @@ log.setLevel(logging.INFO)
 
 bucket_name = '%BUCKET_NAME%'
 bucket_prefix = '%PREFIX%'
-config_file_ext = '.conf'
+config_file_ext = 'conf'
 
 
 # Resource tags come in the format of [{"Key": "Tag1", "Value":"Tag1value"},{"Key":"Tag2","Value":"Tag2value"}]
@@ -327,7 +327,7 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
         Body=str.encode(vpn_config_1),
         Bucket=bucket_name,
         Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 +
-        config_file_ext,
+        '.' + config_file_ext,
         ACL='bucket-owner-full-control',
         ServerSideEncryption='aws:kms',
         SSEKMSKeyId=config['KMS_KEY'])
@@ -339,7 +339,7 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
         Body=str.encode(vpn_config_2),
         Bucket=bucket_name,
         Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 +
-        config_file_ext,
+        '.' + config_file_ext,
         ACL='bucket-owner-full-control',
         ServerSideEncryption='aws:kms',
         SSEKMSKeyId=config['KMS_KEY'])
@@ -418,7 +418,7 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
             Body=str.encode(vpn_config_1),
             Bucket=bucket_name,
             Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 +
-            config_file_ext,
+            '.' + config_file_ext,
             ACL='bucket-owner-full-control',
             ServerSideEncryption='aws:kms',
             SSEKMSKeyId=config['KMS_KEY'])
@@ -466,7 +466,7 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
             Body=str.encode(vpn_config_2),
             Bucket=bucket_name,
             Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 +
-            config_file_ext,
+            '.' + config_file_ext,
             ACL='bucket-owner-full-control',
             ServerSideEncryption='aws:kms',
             SSEKMSKeyId=config['KMS_KEY'])
