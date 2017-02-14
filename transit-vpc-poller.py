@@ -168,8 +168,9 @@ def getVirtualGateways(vgw_s, vpn_s, config):
         elif vgwTags[hub_tag_key] == hub_tag_value_delete:
             vgws['delete'][vgw_id] = vgw
 
-    log.info('Processed VirtualGateways and VPNConnections for Hub Tag %s/%s',
-             hub_tag_value_create, hub_tag_value_delete)
+    log.info('Processed VirtualGateways %s=%s, %s=%s', hub_tag_value_create,
+             len(vgws['create'].keys()), hub_tag_value_delete,
+             len(vgws['delete'].keys()))
     return vgws
 
 
