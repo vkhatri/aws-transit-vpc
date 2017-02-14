@@ -345,7 +345,7 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
     log.info("Pushed CSR2 VPNConnection %s JSON Configuration to S3", vpn_id_2)
 
     # send metrics anonymous data
-    # sendAnonymousData(config, vgw['Tags'], region, 2)
+    sendAnonymousData(config, vgw['Tags'], region, 2)
 
 
 # This Function Deletes VPNConnections for a VirtualGateway
@@ -482,7 +482,7 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
                  vpn_id_1, vgw_id)
 
     # send metrics anonymous data
-    # sendAnonymousData(config, vgw['Tags'], region, 1)
+    sendAnonymousData(config, vgw['Tags'], region, 1)
 
 
 def lambda_handler(event, context):
