@@ -114,10 +114,9 @@ def customerGateways(config, ec2, action):
                     cgw_id = cgw_info['CustomerGateways'][0][
                         'CustomerGatewayId']
                     ec2.delete_customer_gateway(CustomerGatewayId=cgw_id)
-
-                log.info(
-                    "Deleted %s [PublicIp=%s] since it has no VPN connections left",
-                    cgw_id, ip)
+                    log.info("Deleted Customer Gateway with IP %s", ip)
+                else:
+                    log.info("Already Deleted Customer Gateway with IP %s", ip)
             except:
                 log.info("[PublicIp=%s] still has existing VPN connections",
                          ip)
@@ -326,8 +325,8 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
     s3.put_object(
         Body=str.encode(vpn_config_1),
         Bucket=bucket_name,
-        Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 +
-        '.' + config_file_ext,
+        Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 + '.' +
+        config_file_ext,
         ACL='bucket-owner-full-control',
         ServerSideEncryption='aws:kms',
         SSEKMSKeyId=config['KMS_KEY'])
@@ -338,8 +337,8 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
     s3.put_object(
         Body=str.encode(vpn_config_2),
         Bucket=bucket_name,
-        Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 +
-        '.' + config_file_ext,
+        Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 + '.' +
+        config_file_ext,
         ACL='bucket-owner-full-control',
         ServerSideEncryption='aws:kms',
         SSEKMSKeyId=config['KMS_KEY'])
@@ -417,8 +416,8 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
         s3.put_object(
             Body=str.encode(vpn_config_1),
             Bucket=bucket_name,
-            Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 +
-            '.' + config_file_ext,
+            Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 + '.' +
+            config_file_ext,
             ACL='bucket-owner-full-control',
             ServerSideEncryption='aws:kms',
             SSEKMSKeyId=config['KMS_KEY'])
@@ -465,8 +464,8 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
         s3.put_object(
             Body=str.encode(vpn_config_2),
             Bucket=bucket_name,
-            Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 +
-            '.' + config_file_ext,
+            Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 + '.' +
+            config_file_ext,
             ACL='bucket-owner-full-control',
             ServerSideEncryption='aws:kms',
             SSEKMSKeyId=config['KMS_KEY'])
