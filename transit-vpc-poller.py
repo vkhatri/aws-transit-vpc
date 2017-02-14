@@ -486,17 +486,23 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
     sendAnonymousData(config, vgw['Tags'], region, 1)
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, context, local_config=None):
     # Figure out the account number by parsing this function's ARN
     account_id = re.findall(':(\d+):', context.invoked_function_arn)[0]
+
     # Retrieve Transit VPC configuration from transit_vpn_config.txt
     s3 = boto3.client('s3', config=Config(signature_version='s3v4'))
-    log.info('Getting config file %s/%s%s', bucket_name, bucket_prefix,
-             'transit_vpc_config.txt')
-    s3content = s3.get_object(
-        Bucket=bucket_name,
-        Key=bucket_prefix + 'transit_vpc_config.txt')['Body'].read()
-    config = ast.literal_eval(s3content)
+
+    if not local_config:
+        log.info('Getting config file %s/%s%s', bucket_name, bucket_prefix,
+                 'transit_vpc_config.txt')
+        s3content = s3.get_object(
+            Bucket=bucket_name,
+            Key=bucket_prefix + 'transit_vpc_config.txt')['Body'].read()
+        config = ast.literal_eval(s3content)
+    else:
+        config = local_config
+
     config['HUB_TAG'] = config.get('HUB_TAG') or 'transitvpc:spoke'
     config['HUB_TAG_VALUE_CREATE'] = config.get(
         'HUB_TAG_VALUE_CREATE') or 'create'
