@@ -119,7 +119,7 @@ def customerGateways(config, ec2, action):
                     "Deleted %s [PublicIp=%s] since it has no VPN connections left",
                     cgw_id, ip)
             except:
-                log.info("%s [PublicIp=%s] still has existing VPN connections",
+                log.info("[PublicIp=%s] still has existing VPN connections",
                          ip)
 
 
