@@ -111,16 +111,16 @@ def customerGateways(config, ec2, action):
 
             try:
                 if len(cgw_info['CustomerGateways']) == 1:
-                    cg_id = cgw_info['CustomerGateways'][0][
+                    cgw_id = cgw_info['CustomerGateways'][0][
                         'CustomerGatewayId']
-                    ec2.delete_customer_gateway(CustomerGatewayId=cg_id)
+                    ec2.delete_customer_gateway(CustomerGatewayId=cgw_id)
 
                 log.info(
                     "Deleted %s [PublicIp=%s] since it has no VPN connections left",
-                    cg_id, ip)
+                    cgw_id, ip)
             except:
                 log.info("%s [PublicIp=%s] still has existing VPN connections",
-                         cg_id, ip)
+                         ip)
 
 
 # This Function returns a dictionary of VirtualGateways with VPNConnections
