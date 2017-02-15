@@ -14,7 +14,7 @@
 import boto3
 from botocore.client import Config
 import paramiko
-from xml.dom import minidom
+import json
 import ast
 import time
 import os
@@ -196,7 +196,7 @@ def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
             s3={'addressing_style': 'virtual'}, signature_version='s3v4'))
     config = s3.get_object(Bucket=bucket_name, Key=bucket_key)
 
-    json_config = json.load(config['Body'].read())
+    json_config = json.loads(config['Body'].read())
     # Return empty list if configuration attribute is not found
     if not json_config:
         return []
