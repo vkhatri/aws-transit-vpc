@@ -20,6 +20,7 @@ import time
 import os
 import string
 import logging
+
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
@@ -139,10 +140,11 @@ def getBucketPrefix(bucket_name, bucket_key):
 
 
 # Logic to download the transit VPC configuration file from S3
-def getTransitConfig(bucket_name, bucket_prefix, s3_url, config_file):
+def getTransitConfig(region, bucket_name, bucket_prefix, s3_url, config_file):
     s3 = boto3.client(
         's3',
         endpoint_url=s3_url,
+        region_name=region,
         config=Config(
             s3={'addressing_style': 'virtual'}, signature_version='s3v4'))
     log.info("Downloading config file: %s/%s/%s%s", s3_url, bucket_name,
@@ -153,10 +155,11 @@ def getTransitConfig(bucket_name, bucket_prefix, s3_url, config_file):
 
 
 # Logic to upload a new/updated transit VPC configuration file to S3 (not currently used)
-def putTransitConfig(bucket_name, bucket_prefix, s3_url, config_file, config):
+def putTransitConfig(region, bucket_name, bucket_prefix, s3_url, config_file, config):
     s3 = boto3.client(
         's3',
         endpoint_url=s3_url,
+        region_name=region,
         config=Config(
             s3={'addressing_style': 'virtual'}, signature_version='s3v4'))
     log.info("Uploading new config file: %s/%s/%s%s", s3_url, bucket_name,
@@ -166,12 +169,13 @@ def putTransitConfig(bucket_name, bucket_prefix, s3_url, config_file, config):
 
 
 # Logic to download the SSH private key from S3 to be used for SSH public key authentication
-def downloadPrivateKey(bucket_name, bucket_prefix, s3_url, prikey):
+def downloadPrivateKey(region, bucket_name, bucket_prefix, s3_url, prikey):
     if os.path.exists('/tmp/' + prikey):
         os.remove('/tmp/' + prikey)
     s3 = boto3.client(
         's3',
         endpoint_url=s3_url,
+        region_name=region,
         config=Config(
             s3={'addressing_style': 'virtual'}, signature_version='s3v4'))
     log.info("Downloading private key: %s/%s/%s%s", s3_url, bucket_name,
@@ -180,13 +184,14 @@ def downloadPrivateKey(bucket_name, bucket_prefix, s3_url, prikey):
 
 
 # Logic to create the appropriate Cisco configuration
-def create_cisco_config(bucket_name, bucket_key, s3_url, bgp_asn, ssh):
+def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
     log.info("Processing %s/%s", bucket_name, bucket_key)
 
     # Download the VPN configuration XML document
     s3 = boto3.client(
         's3',
         endpoint_url=s3_url,
+        region_name=region,
         config=Config(
             s3={'addressing_style': 'virtual'}, signature_version='s3v4'))
     config = s3.get_object(Bucket=bucket_name, Key=bucket_key)
@@ -393,7 +398,7 @@ def lambda_handler(event, context):
     bucket_prefix = getBucketPrefix(bucket_name, bucket_key)
     log.debug("Getting config")
     stime = time.time()
-    config = getTransitConfig(bucket_name, bucket_prefix,
+    config = getTransitConfig(bucket_region, bucket_name, bucket_prefix,
                               endpoint_url[bucket_region], config_file)
     if 'CSR1' in bucket_key:
         csr_ip = config['PIP1']
@@ -403,7 +408,7 @@ def lambda_handler(event, context):
         csr_name = 'CSR2'
     log.info("--- %s seconds ---", (time.time() - stime))
     # Download private key file from secure S3 bucket
-    downloadPrivateKey(bucket_name, bucket_prefix, endpoint_url[bucket_region],
+    downloadPrivateKey(bucket_region, bucket_name, bucket_prefix, endpoint_url[bucket_region],
                        config['PRIVATE_KEY'])
     log.debug("Reading downloaded private key into memory.")
     k = paramiko.RSAKey.from_private_key_file("/tmp/" + config['PRIVATE_KEY'])
@@ -432,7 +437,7 @@ def lambda_handler(event, context):
     log.debug("%s", prompt(ssh))
     log.debug("Creating config.")
     stime = time.time()
-    csr_config = create_cisco_config(bucket_name, bucket_key,
+    csr_config = create_cisco_config(bucket_region, bucket_name, bucket_key,
                                      endpoint_url[bucket_region],
                                      config['BGP_ASN'], ssh)
     log.info("--- %s seconds ---", (time.time() - stime))
