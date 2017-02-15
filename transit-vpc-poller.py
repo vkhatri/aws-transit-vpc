@@ -183,6 +183,11 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
 
     vgw_id = vgw['VpnGatewayId']
     planet = vgw['Tags'].get(planet_tag_key)
+    if planet:
+        planet = str.split(planet, ',')
+    else:
+        planet = []
+
     preferred_path = vgw['Tags'].get(config['PREFERRED_PATH_TAG'], 'none')
     vpn_id_1 = False
     vpn_id_2 = False
@@ -358,6 +363,11 @@ def deleteVirtualGatewayVpn(account_id, ec2, s3, config, vgw):
 
     vgw_id = vgw['VpnGatewayId']
     planet = vgw['Tags'].get(planet_tag_key)
+    if planet:
+        planet = str.split(planet, ',')
+    else:
+        planet = []
+
     preferred_path = vgw['Tags'].get(config['PREFERRED_PATH_TAG'], 'none')
     vpn_id_1 = False
     vpn_id_2 = False
