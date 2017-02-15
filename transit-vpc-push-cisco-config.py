@@ -398,14 +398,25 @@ def lambda_handler(event, context):
     bucket_prefix = getBucketPrefix(bucket_name, bucket_key)
     log.debug("Getting config")
     stime = time.time()
+
     config = getTransitConfig(bucket_region, bucket_name, bucket_prefix,
-                              endpoint_url[bucket_region], config_file)
+            endpoint_url[bucket_region], config_file)
+
+    csr_access_ip_type = config.get('CSR_ACCESS_IP_TYPE') or 'private'
+
     if 'CSR1' in bucket_key:
-        csr_ip = config['PIP1']
         csr_name = 'CSR1'
+        if csr_access_ip_type == 'public':
+            csr_ip = config['EIP1']
+        else:
+            csr_ip = config['PIP1']
     else:
-        csr_ip = config['PIP2']
         csr_name = 'CSR2'
+        if csr_access_ip_type == 'public':
+            csr_ip = config['EIP2']
+        else:
+            csr_ip = config['PIP2']
+
     log.info("--- %s seconds ---", (time.time() - stime))
     # Download private key file from secure S3 bucket
     downloadPrivateKey(bucket_region, bucket_name, bucket_prefix, endpoint_url[bucket_region],
