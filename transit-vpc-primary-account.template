@@ -93,8 +93,18 @@
         "Default": "Yes",
         "AllowedValues": [
           "Yes",
-        "No"
+          "No"
         ]
+      },
+      "ConfiguratorS3Template" : {
+        "Description" : "S3 Location of Transit VPC CSR Configurator Lambda Function Code",
+        "Type" : "String",
+        "Default" : "solutions-reference/transit-vpc/v3/transit-vpc-push-cisco-config.zip"
+      },
+      "PollerS3Template" : {
+        "Description" : "S3 Location of Transit VPC Poller Lambda Function Code",
+        "Type" : "String",
+        "Default" : "solutions-reference/transit-vpc/v3/transit-vpc-poller.py"
       }
     },
     "Conditions" : {
@@ -147,7 +157,7 @@
     "Mappings" : {
       "Function" : {
         "Configurator" : {
-          "CodeLocation" : "solutions-reference/transit-vpc/v3/transit-vpc-push-cisco-config.zip",
+          "CodeLocation" : { "Ref": "ConfiguratorS3Template" },
           "CodeRegion" : "us-east-1",
           "Name" : "cisco-configurator",
           "Description": "Transit VPC: This function is invoked when a generic VPN configuration is placed in an S3 bucket - it converts the generic information into Cisco IOS specific commands and pushes the config to transit VPC routers.",
@@ -156,7 +166,7 @@
           "MemorySize": "128"
         },
         "Poller" : {
-          "CodeLocation" : "solutions-reference/transit-vpc/v3/transit-vpc-poller.py",
+          "CodeLocation" : { "Ref": "PollerS3Template" },
           "CodeRegion" : "us-east-1",
           "Name" : "vgw-poller",
           "Description": "Transit VPC: Poller function responsible for identifying specifically tagged VGWs and creating VPN connections to transit VPC.",
