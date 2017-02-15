@@ -155,7 +155,8 @@ def getTransitConfig(region, bucket_name, bucket_prefix, s3_url, config_file):
 
 
 # Logic to upload a new/updated transit VPC configuration file to S3 (not currently used)
-def putTransitConfig(region, bucket_name, bucket_prefix, s3_url, config_file, config):
+def putTransitConfig(region, bucket_name, bucket_prefix, s3_url, config_file,
+                     config):
     s3 = boto3.client(
         's3',
         endpoint_url=s3_url,
@@ -400,7 +401,7 @@ def lambda_handler(event, context):
     stime = time.time()
 
     config = getTransitConfig(bucket_region, bucket_name, bucket_prefix,
-            endpoint_url[bucket_region], config_file)
+                              endpoint_url[bucket_region], config_file)
 
     csr_access_ip_type = config.get('CSR_ACCESS_IP_TYPE') or 'private'
 
@@ -419,8 +420,8 @@ def lambda_handler(event, context):
 
     log.info("--- %s seconds ---", (time.time() - stime))
     # Download private key file from secure S3 bucket
-    downloadPrivateKey(bucket_region, bucket_name, bucket_prefix, endpoint_url[bucket_region],
-                       config['PRIVATE_KEY'])
+    downloadPrivateKey(bucket_region, bucket_name, bucket_prefix,
+                       endpoint_url[bucket_region], config['PRIVATE_KEY'])
     log.debug("Reading downloaded private key into memory.")
     k = paramiko.RSAKey.from_private_key_file("/tmp/" + config['PRIVATE_KEY'])
     # Delete the temp copy of the private key
