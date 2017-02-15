@@ -211,7 +211,7 @@ def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
     vpn_endpoint = transit_vpc_config.get('vpn_endpoint')
     vpn_status = transit_vpc_config.get('status')
     preferred_path = transit_vpc_config.get('preferred_path')
-    planet = transit_vpc_config.get('planet')
+    planets = transit_vpc_config.get('planet')
     region = transit_vpc_config.get('region')
     customer_gateway_id = transit_vpc_config.get('cgw-3e799057')
     vpn_gateway_id = transit_vpc_config.get('vgw-23a74f4a')
