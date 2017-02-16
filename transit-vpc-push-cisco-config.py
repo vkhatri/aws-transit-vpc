@@ -217,7 +217,7 @@ def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
     # should exists
     if planet:
         tunnel_vrf = 'vrf-' + planet.lower()
-    else
+    else:
         # otherwise use default vrf vpn_connection_id
         tunnel_vrf = vpn_connection_id
     region = transit_vpc_config.get('region')
@@ -358,8 +358,7 @@ def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
                 '  keyring keyring-{}-{}'.format(vpn_connection_id, tunnelId))
             config_text.append('exit')
             config_text.append('interface Tunnel{}'.format(tunnelId))
-            config_text.append(
-                '  ip vrf forwarding {}'.format(tunnel_vrf))
+            config_text.append('  ip vrf forwarding {}'.format(tunnel_vrf))
             config_text.append('  ip address {} 255.255.255.252'.format(
                 customer_gateway_tunnel_inside_address_ip_address))
             config_text.append('  ip virtual-reassembly')
