@@ -211,7 +211,15 @@ def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
     vpn_endpoint = transit_vpc_config.get('vpn_endpoint')
     vpn_status = transit_vpc_config.get('status')
     preferred_path = transit_vpc_config.get('preferred_path')
-    planets = transit_vpc_config.get('planet')
+    planet = transit_vpc_config.get('planet')
+    # planet value is always referred as lowercase
+    # planet vrf is always formed as 'vrf-{planet} and
+    # should exists
+    if planet:
+        tunnel_vrf = 'vrf-' + planet.lower()
+    else
+        # otherwise use default vrf vpn_connection_id
+        tunnel_vrf = vpn_connection_id
     region = transit_vpc_config.get('region')
     customer_gateway_id = transit_vpc_config.get('cgw-3e799057')
     vpn_gateway_id = transit_vpc_config.get('vgw-23a74f4a')
@@ -237,7 +245,10 @@ def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
         config_text.append(
             '  no address-family ipv4 vrf {}'.format(vpn_connection_id))
         config_text.append('exit')
-        config_text.append('no ip vrf {}'.format(vpn_connection_id))
+        # no planet vrf
+        config_text.append('no ip vrf {}'.format(tunnel_vrf))
+        # no vrf vpn connection id
+        # config_text.append('no ip vrf {}'.format(vpn_connection_id))
         config_text.append('interface Tunnel{}'.format(tunnelId))
         config_text.append('  shutdown')
         config_text.append('exit')
@@ -348,7 +359,7 @@ def create_cisco_config(region, bucket_name, bucket_key, s3_url, bgp_asn, ssh):
             config_text.append('exit')
             config_text.append('interface Tunnel{}'.format(tunnelId))
             config_text.append(
-                '  ip vrf forwarding {}'.format(vpn_connection_id))
+                '  ip vrf forwarding {}'.format(tunnel_vrf))
             config_text.append('  ip address {} 255.255.255.252'.format(
                 customer_gateway_tunnel_inside_address_ip_address))
             config_text.append('  ip virtual-reassembly')
