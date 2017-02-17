@@ -221,8 +221,9 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
             CustomerGatewayId=cg1['CustomerGateway']['CustomerGatewayId'],
             VpnGatewayId=vgw['VpnGatewayId'],
             Options={'StaticRoutesOnly': False})
-        vpn_1 = vpn_1['VpnConnection']
-        vpn_id_1 = vpn_1['VpnConnectionId']
+        vpn_id_1 = vpn_1['VpnConnection']['VpnConnectionId']
+        vpn_1 = ec2.describe_vpn_connections(VpnConnectionIds=[vpn_id_1])['VpnConnections'][0]
+
         ec2.create_tags(
             Resources=[vpn_id_1],
             Tags=[{
@@ -252,8 +253,8 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
             CustomerGatewayId=cg2['CustomerGateway']['CustomerGatewayId'],
             VpnGatewayId=vgw['VpnGatewayId'],
             Options={'StaticRoutesOnly': False})
-        vpn_2 = vpn_2['VpnConnection']
-        vpn_id_2 = vpn_2['VpnConnectionId']
+        vpn_id_2 = vpn_2['VpnConnection']['VpnConnectionId']
+        vpn_2 = ec2.describe_vpn_connections(VpnConnectionIds=[vpn_id_2])['VpnConnections'][0]
         ec2.create_tags(
             Resources=[vpn_id_2],
             Tags=[{
