@@ -17,6 +17,7 @@ import xmltodict
 import ast
 import logging
 import datetime, sys, json, urllib2, urllib, re
+import copy
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -187,6 +188,8 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
     preferred_path = vgw['Tags'].get(config['PREFERRED_PATH_TAG'], 'none')
     vpn_id_1 = False
     vpn_id_2 = False
+    push_config_vpn_1 = False
+    push_config_vpn_2 = False
 
     log.info("Checking VPNConnections for VirtualGateway %s", vgw_id)
     # Check to see if the VGW already has Transit VPC VPN Connections
@@ -194,19 +197,37 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
         for vpn in vgw['VpnConnections']:
             vpn_id = vpn['VpnConnectionId']
             vpn_tags = vpn.get('Tags')
+            planet_tag_key_value = vpn_tags.get(planet_tag_key)
 
             if vpn_tags.get('Name') == (
                     vgw_id + '-to-Transit-VPC CSR1') and vpn_tags.get(
                         hub_tag_key) == hub_tag_value_create and vpn_tags.get(
                             'transitvpc:endpoint') == 'CSR1':
-                vpn_id_1 = vpn_id
-                vpn_1 = vpn
+                # validate VGW and VPN connection planet is the same
+                # otherwise, delete the VPN connection and recreate
+                if vpn_tags.get(planet_tag_key) == planet_tag_key_value:
+                    vpn_id_1 = vpn_id
+                    vpn_1 = vpn
+                else:
+                    vgw_copy = copy.deepcopy(vgw)
+                    vgw_copy['VpnConnections'] == [vpn]
+                    deleteVirtualGatewayVpn(account_id, ec2, s3, config,
+                                            vgw_copy)
+
             elif vpn_tags.get('Name') == (
                     vgw_id + '-to-Transit-VPC CSR2') and vpn_tags.get(
                         hub_tag_key) == hub_tag_value_create and vpn_tags.get(
                             'transitvpc:endpoint') == 'CSR2':
-                vpn_id_2 = vpn_id
-                vpn_2 = vpn
+                # validate VGW and VPN connection planet is the same
+                # otherwise, delete the VPN connection and recreate
+                if vpn_tags.get(planet_tag_key) == planet_tag_key_value:
+                    vpn_id_2 = vpn_id
+                    vpn_2 = vpn
+                else:
+                    vgw_copy = copy.deepcopy(vgw)
+                    vgw_copy['VpnConnections'] == [vpn]
+                    deleteVirtualGatewayVpn(account_id, ec2, s3, config,
+                                            vgw_copy)
             else:
                 log.info("skipping poller create vpn connection id %s" %
                          vpn_id)
@@ -214,6 +235,7 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
     # Need to create VPN connections if this is a spoke VGW and no VPN
     # connections already exist for CSR1 and CSR2
     if not vpn_id_1:
+        push_config_vpn_1 = True
         log.info("Creating CSR1 VPNConnection for VirtualGateway %s", vgw_id)
         # Create and tag first VPN connection
         vpn_1 = ec2.create_vpn_connection(
@@ -222,7 +244,8 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
             VpnGatewayId=vgw['VpnGatewayId'],
             Options={'StaticRoutesOnly': False})
         vpn_id_1 = vpn_1['VpnConnection']['VpnConnectionId']
-        vpn_1 = ec2.describe_vpn_connections(VpnConnectionIds=[vpn_id_1])['VpnConnections'][0]
+        vpn_1 = ec2.describe_vpn_connections(
+            VpnConnectionIds=[vpn_id_1])['VpnConnections'][0]
 
         ec2.create_tags(
             Resources=[vpn_id_1],
@@ -246,6 +269,7 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
             vpn_id_1, vgw_id)
 
     if not vpn_id_2:
+        push_config_vpn_2 = True
         log.info("Creating CSR2 VPNConnection for VirtualGateway %s", vgw_id)
         # Create and tag second VPN connection
         vpn_2 = ec2.create_vpn_connection(
@@ -254,7 +278,8 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
             VpnGatewayId=vgw['VpnGatewayId'],
             Options={'StaticRoutesOnly': False})
         vpn_id_2 = vpn_2['VpnConnection']['VpnConnectionId']
-        vpn_2 = ec2.describe_vpn_connections(VpnConnectionIds=[vpn_id_2])['VpnConnections'][0]
+        vpn_2 = ec2.describe_vpn_connections(
+            VpnConnectionIds=[vpn_id_2])['VpnConnections'][0]
         ec2.create_tags(
             Resources=[vpn_id_2],
             Tags=[{
@@ -276,78 +301,94 @@ def createVirtualGatewayVpn(account_id, ec2, s3, cg1, cg2, config, vgw):
             "Already Existing CSR2 VPNConnection %s for VirtualGateway %s",
             vpn_id_2, vgw_id)
 
-    log.info("Creating CSR1 VPNConnection %s Configuration", vpn_id_1)
-    # Creating CSR1 VPNConnection Configuration
-    vpn_config_1 = dict(
-        vpn_connection_id=vpn_id_1,
-        transit_vpc_config={},
-        ipsec_tunnels=vpn_1['CustomerGatewayConfiguration']['vpn_connection'][
-            'ipsec_tunnel'])
+    if push_config_vpn_1:
+        log.info("Creating CSR1 VPNConnection %s Configuration", vpn_id_1)
+        # Creating CSR1 VPNConnection Configuration
+        vpn_config_1 = dict(
+            vpn_connection_id=vpn_id_1,
+            transit_vpc_config={},
+            ipsec_tunnels=vpn_1['CustomerGatewayConfiguration'][
+                'vpn_connection']['ipsec_tunnel'])
 
-    vpn_config_1['transit_vpc_config'] = {
-        "preferred_path": preferred_path,
-        "account_id": account_id,
-        "vpn_endpoint": "CSR1",
-        "status": "create",
-        "planet": planet,
-        "region": region,
-        "customer_gateway_id": vpn_1['CustomerGatewayId'],
-        "vpn_connection_type": vpn_1['Type'],
-        "vpn_gateway_id": vpn_1['VpnGatewayId']
-    }
+        vpn_config_1['transit_vpc_config'] = {
+            "preferred_path": preferred_path,
+            "account_id": account_id,
+            "vpn_endpoint": "CSR1",
+            "status": "create",
+            "planet": planet,
+            "region": region,
+            "customer_gateway_id": vpn_1['CustomerGatewayId'],
+            "vpn_connection_type": vpn_1['Type'],
+            "vpn_gateway_id": vpn_1['VpnGatewayId']
+        }
 
-    log.info("Creating CSR2 VPNConnection %s Configuration", vpn_id_2)
-    # Creating CSR2 VPNConnection Configuration
-    vpn_config_2 = dict(
-        vpn_connection_id=vpn_id_2,
-        transit_vpc_config={},
-        ipsec_tunnels=vpn_2['CustomerGatewayConfiguration']['vpn_connection'][
-            'ipsec_tunnel'])
+        # Generate JSON Configuration
+        log.info("Generating CSR1 VPNConnection %s JSON Configuration",
+                 vpn_id_1)
+        vpn_config_1 = json.dumps(vpn_config_1, indent=2)
 
-    vpn_config_2['transit_vpc_config'] = {
-        "preferred_path": preferred_path,
-        "account_id": account_id,
-        "vpn_endpoint": "CSR2",
-        "status": "create",
-        "planet": planet,
-        "region": region,
-        "customer_gateway_id": vpn_2['CustomerGatewayId'],
-        "vpn_connection_type": vpn_2['Type'],
-        "vpn_gateway_id": vpn_2['VpnGatewayId']
-    }
+        #Put CSR1 config in S3
+        log.info("Push CSR1 VPNConnection %s JSON Configuration to S3",
+                 vpn_id_1)
+        s3.put_object(
+            Body=str.encode(vpn_config_1),
+            Bucket=bucket_name,
+            Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 + '.' +
+            config_file_ext,
+            ACL='bucket-owner-full-control',
+            ServerSideEncryption='aws:kms',
+            SSEKMSKeyId=config['KMS_KEY'])
+        log.info("Pushed CSR1 VPNConnection %s JSON Configuration to S3",
+                 vpn_id_1)
+    else:
+        log.info("CSR1 VPNConnection %s is upto date", vpn_id_1)
 
-    # Generate JSON Configuration
-    log.info("Generating CSR1 VPNConnection %s JSON Configuration", vpn_id_1)
-    vpn_config_1 = json.dumps(vpn_config_1, indent=2)
-    log.info("Generating CSR2 VPNConnection %s JSON Configuration", vpn_id_2)
-    vpn_config_2 = json.dumps(vpn_config_2, indent=2)
+    if push_config_vpn_2:
+        log.info("Creating CSR2 VPNConnection %s Configuration", vpn_id_2)
+        # Creating CSR2 VPNConnection Configuration
+        vpn_config_2 = dict(
+            vpn_connection_id=vpn_id_2,
+            transit_vpc_config={},
+            ipsec_tunnels=vpn_2['CustomerGatewayConfiguration'][
+                'vpn_connection']['ipsec_tunnel'])
 
-    #Put CSR1 config in S3
-    log.info("Push CSR1 VPNConnection %s JSON Configuration to S3", vpn_id_1)
-    s3.put_object(
-        Body=str.encode(vpn_config_1),
-        Bucket=bucket_name,
-        Key=bucket_prefix + 'CSR1/' + region + '-' + vpn_id_1 + '.' +
-        config_file_ext,
-        ACL='bucket-owner-full-control',
-        ServerSideEncryption='aws:kms',
-        SSEKMSKeyId=config['KMS_KEY'])
-    log.info("Pushed CSR1 VPNConnection %s JSON Configuration to S3", vpn_id_1)
+        vpn_config_2['transit_vpc_config'] = {
+            "preferred_path": preferred_path,
+            "account_id": account_id,
+            "vpn_endpoint": "CSR2",
+            "status": "create",
+            "planet": planet,
+            "region": region,
+            "customer_gateway_id": vpn_2['CustomerGatewayId'],
+            "vpn_connection_type": vpn_2['Type'],
+            "vpn_gateway_id": vpn_2['VpnGatewayId']
+        }
 
-    #Put CSR2 config in S3
-    log.info("Push CSR2 VPNConnection %s JSON Configuration to S3", vpn_id_2)
-    s3.put_object(
-        Body=str.encode(vpn_config_2),
-        Bucket=bucket_name,
-        Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 + '.' +
-        config_file_ext,
-        ACL='bucket-owner-full-control',
-        ServerSideEncryption='aws:kms',
-        SSEKMSKeyId=config['KMS_KEY'])
-    log.info("Pushed CSR2 VPNConnection %s JSON Configuration to S3", vpn_id_2)
+        log.info("Generating CSR2 VPNConnection %s JSON Configuration",
+                 vpn_id_2)
+        vpn_config_2 = json.dumps(vpn_config_2, indent=2)
 
-    # send metrics anonymous data
-    sendAnonymousData(config, vgw['Tags'], region, 2)
+        #Put CSR2 config in S3
+        log.info("Push CSR2 VPNConnection %s JSON Configuration to S3",
+                 vpn_id_2)
+        s3.put_object(
+            Body=str.encode(vpn_config_2),
+            Bucket=bucket_name,
+            Key=bucket_prefix + 'CSR2/' + region + '-' + vpn_id_2 + '.' +
+            config_file_ext,
+            ACL='bucket-owner-full-control',
+            ServerSideEncryption='aws:kms',
+            SSEKMSKeyId=config['KMS_KEY'])
+        log.info("Pushed CSR2 VPNConnection %s JSON Configuration to S3",
+                 vpn_id_2)
+
+        sendAnonymousData(config, vgw['Tags'], region, 2)
+    else:
+        log.info("CSR2 VPNConnection %s is upto date", vpn_id_2)
+
+    if push_config_vpn_1 or push_config_vpn_2:
+        # send metrics anonymous data
+        sendAnonymousData(config, vgw['Tags'], region, 2)
 
 
 # This Function Deletes VPNConnections for a VirtualGateway
