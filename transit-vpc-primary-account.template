@@ -82,8 +82,18 @@
         "Type" : "String",
         "Default" : "vpnconfigs/"
       },
-      "GlobalConfigFileS3" : {
-        "Description" : "Global JSON Configuration File S3 Location for CSR Glboal Configuration, e.g. (vrf, planets etc.)",
+      "GlobalConfigFileS3Region" : {
+        "Description" : "CSR Global JSON Configuration File S3 Bucket Region",
+        "Type" : "String",
+        "Default" : "us-east-1"
+      },
+      "GlobalConfigFileS3Bucket" : {
+        "Description" : "CSR Global JSON Configuration File S3 Bucket Name",
+        "Type" : "String",
+        "Default" : ""
+      },
+      "GlobalConfigFileS3Key" : {
+        "Description" : "CSR Global JSON Configuration File S3 Bucket Key",
         "Type" : "String",
         "Default" : ""
       },
@@ -726,7 +736,9 @@
             "'PIP1':'",{ "Fn::GetAtt" : [ "VpcCsr1", "PrivateIp" ] },"',",
             "'PIP2':'",{ "Fn::GetAtt" : [ "VpcCsr2", "PrivateIp" ] },"',",
             "'CSR_ACCESS_IP_TYPE':",{ "Ref" : "CSRAccessIpType" },",",
-            "'GLOBAL_CONFIG_FILE':",{ "Ref" : "GlobalConfigFileS3" },",",
+            "'GLOBAL_CONFIG_FILE_S3_REGION':",{ "Ref" : "GlobalConfigFileS3Region" },",",
+            "'GLOBAL_CONFIG_FILE_S3_BUCKET':",{ "Ref" : "GlobalConfigFileS3Bucket" },",",
+            "'GLOBAL_CONFIG_FILE_S3_KEY':",{ "Ref" : "GlobalConfigFileS3Key" },",",
             "'BGP_ASN':",{ "Ref" : "BgpAsn" },",",
             "'PREFERRED_PATH_TAG':'",{ "Ref" : "PreferredPathTag" },"',",
             "'HUB_TAG':'",{ "Ref" : "SpokeTag" },"',",
@@ -974,9 +986,17 @@
         "Description" : "Tag used to identify spoke VPCs. Planet (vrf)",
         "Value" : { "Ref": "CSRAccessIpType" }
       },
-      "GlobalConfigFileS3": {
-        "Description" : "JSON Configuration S3 File Used to lookup CSR Global Configuration",
-        "Value" : { "Ref": "GlobalConfigFileS3" }
+      "GlobalConfigFileS3Region": {
+        "Description" : "JSON Configuration S3 File Used to lookup CSR Global Configuration Region Name",
+        "Value" : { "Ref": "GlobalConfigFileS3Region" }
+      },
+      "GlobalConfigFileS3Bucket": {
+        "Description" : "JSON Configuration S3 File Used to lookup CSR Global Configuration Bucket Name",
+        "Value" : { "Ref": "GlobalConfigFileS3Bucket" }
+      },
+      "GlobalConfigFileS3Key": {
+        "Description" : "JSON Configuration S3 File Used to lookup CSR Global Configuration S3 Key",
+        "Value" : { "Ref": "GlobalConfigFileS3Key" }
       },
       "PreferredPathTagName" : {
         "Description" : "Tag used to identify the spoke VPC preferred path.",
