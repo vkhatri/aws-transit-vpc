@@ -38,7 +38,7 @@
       "SpokePlanetTag" : {
         "Description" : "Tag to use to identify spoke VPCs Planet",
         "Type" : "String",
-        "Default" : ""
+        "Default" : "transitvpc:planet"
       },
       "CSRAccessIpType" : {
         "Description" : "CSR IP Address to use for SSH access to the instances (private/public)",
@@ -95,7 +95,7 @@
       "GlobalConfigFileS3Key" : {
         "Description" : "CSR Global JSON Configuration File S3 Bucket Key",
         "Type" : "String",
-        "Default" : ""
+        "Default" : "/CsrGlobalConfig.conf"
       },
       "AccountId" : {
         "Description" : "Another AWS Account ID to authorize access to VPN Config S3 bucket (for example bucket and KMS key policies).",
@@ -127,15 +127,15 @@
         "ParameterGroups" : [
         {
           "Label" : { "default":"Cisco CSR Configuration" },
-          "Parameters" : [ "CSRType", "KeyName", "LicenseModel", "TerminationProtection" ]
+          "Parameters" : [ "CSRType", "KeyName", "LicenseModel", "TerminationProtection", "CSRAccessIpType" ]
         },
         {
           "Label" : { "default":"AWS Service Configuration" },
-          "Parameters" : [ "S3Prefix", "AccountId" ]
+          "Parameters" : [ "S3Prefix", "AccountId", "GlobalConfigFileS3Region", "GlobalConfigFileS3Bucket", "GlobalConfigFileS3Key" ]
         },
         {
           "Label" : { "default" : "Network Configuration" },
-          "Parameters" : [ "VpcCidr", "PubSubnet1", "PubSubnet2","BgpAsn","SpokeTag","SpokeTagValue","PreferredPathTag" ]
+          "Parameters" : [ "VpcCidr", "PubSubnet1", "PubSubnet2","BgpAsn","SpokeTag","SpokeTagValueCreate","SpokeTagValueDelete", "SpokePlanetTag", "PreferredPathTag"]
         },
         {
           "Label": { "default": "Anonymous Metrics Request" },
@@ -145,14 +145,20 @@
         "ParameterLabels" : {
           "BgpAsn" : { "default" : "Transit VPC BGP ASN" },
           "SpokeTag" : { "default" : "Spoke VPC Tag Name" },
-          "SpokeTagValue" : { "default" : "Spoke VPC Tag Value" },
+          "SpokeTagValueCreate" : { "default" : "Spoke VPC Tag Value to Create" },
+          "SpokeTagValueDelete" : { "default" : "Spoke VPC Tag Value to Delete" },
+          "SpokePlanetTag" : { "default" : "Spoke VPC Planet Tag Name" },
           "PreferredPathTag" : { "default" : "Preferred VPN Endpoint Tag Name" },
           "VpcCidr" : { "default" : "Transit VPC CIDR Block" },
           "PubSubnet1" : { "default" : "1st Subnet Network" },
           "PubSubnet2" : { "default" : "2nd Subnet Network" },
           "CSRType" : { "default" : "CSR Throughput Requirements" },
+          "CSRAccessIpType" : { "default" : "CSR Access IP Address Type (public or private)" },
           "KeyName" : { "default" : "SSH Key to access CSR" },
           "S3Prefix" : { "default" : "Prefix for S3 Objects" },
+          "GlobalConfigFileS3Region" : { "default" : "Global Configuration File S3 Bucket Region" },
+          "GlobalConfigFileS3Bucket" : { "default" : "Global Configuration File S3 Bucket Name" },
+          "GlobalConfigFileS3Key" : { "default" : "Global Configuration File S3 Prefix" },
           "LicenseModel" : { "default" : "License Model" },
           "TerminationProtection" : { "default" : "Enable Termination Protection" },
           "AccountId" : { "default" : "Additional AWS Account ID (Optional)" }
